@@ -1,0 +1,36 @@
+<footer>
+    <div class="spotify-player bg-light py-3">
+      <!-- 현재 재생 곡 정보 -->
+      <div class="container d-flex flex-column align-items-center">
+        <div id="now-playing-info" class="text-center mb-3">
+          <strong id="track-name" class="d-block">재생 중인 곡 없음</strong>
+          <small id="track-artist">아티스트 정보 없음</small>
+        </div>
+  
+        <!-- 컨트롤 버튼 -->
+        <div class="d-flex justify-content-center">
+          <button id="prev-btn" class="btn btn-outline-secondary mx-2">⏮ 이전</button>
+          <button id="play-btn" class="btn btn-primary mx-2">▶ 재생</button>
+          <button id="pause-btn" class="btn btn-warning mx-2">⏸ 일시정지</button>
+          <button id="next-btn" class="btn btn-outline-secondary mx-2">⏭ 다음</button>
+        </div>
+  
+        <!-- 재생목록 관리 -->
+        <div class="mt-4 w-100">
+          <h5>재생목록 관리</h5>
+          <div class="input-group mb-3">
+            <div>
+                <input id="spotify-uri" class="form-control" placeholder="Spotify URI 입력">
+                <button id="play-button" class="btn btn-success mt-2">재생</button>
+            </div>
+          </div>
+          <button id="fetch-playlists-btn" class="btn btn-info w-100 mb-3">재생목록 가져오기</button>
+          <ul id="playlists" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script src="/js/spotify-player.js"></script>
+  </footer>
+  
