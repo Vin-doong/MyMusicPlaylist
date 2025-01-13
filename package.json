@@ -1,5 +1,5 @@
 {
-  "name": "project2",
+  "name": "project",
   "version": "1.0.0",
   "main": "bin/www",
   "scripts": {
@@ -20,6 +20,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "morgan": "^1.10.0",
+    "node-fetch": "^3.3.2",
     "path": "^0.12.7",
     "spotify-web-api-node": "^5.0.2"
   }

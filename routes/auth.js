@@ -2,7 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const querystring = require('querystring');
 const router = express.Router();
-const { ensureSpotifyToken } = require('../middleware/spotifyToken');
 
 // Spotify 로그인
 router.get('/login', (req, res) => {
@@ -14,6 +13,7 @@ router.get('/login', (req, res) => {
     'streaming', // Web Playback SDK에 필요
     'playlist-read-private',
     'playlist-modify-private',
+    'playlist-modify-public', // 0109raemi
   ];
 
   const authorizeURL =
@@ -28,7 +28,6 @@ router.get('/login', (req, res) => {
   res.redirect(authorizeURL); // Spotify 인증 페이지로 리디렉트
 });
 
-
 // Spotify Callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code || null;
@@ -38,14 +37,13 @@ router.get('/callback', async (req, res) => {
   }
 
   try {
-    const response = await axios.post('https://accounts.spotify.com/api/token', null, {
-      params: {
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
-      },
+    const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+      client_id: process.env.SPOTIFY_CLIENT_ID,
+      client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+    }), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -62,21 +60,23 @@ router.get('/callback', async (req, res) => {
     res.redirect('/main'); // 메인 페이지로 리디렉트
   } catch (error) {
     console.error('토큰 요청 실패:', error.response?.data || error.message);
-    res.status(500).send('토큰 요청 실패');
+    res.status(500).send('Spotify 토큰 요청 실패');
   }
 });
+
 // Token 갱신
 router.get('/refresh-token', async (req, res, next) => {
-  if (!req.session.refreshToken) return res.status(400).send('리프레시 토큰이 없습니다.');
+  if (!req.session.refreshToken) {
+    return res.status(400).send('리프레시 토큰이 없습니다.');
+  }
 
   try {
-    const response = await axios.post('https://accounts.spotify.com/api/token', null, {
-      params: {
-        grant_type: 'refresh_token',
-        refresh_token: req.session.refreshToken,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
-      },
+    const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: req.session.refreshToken,
+      client_id: process.env.SPOTIFY_CLIENT_ID,
+      client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+    }), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
@@ -85,43 +85,42 @@ router.get('/refresh-token', async (req, res, next) => {
 
     res.json({ accessToken: response.data.access_token });
   } catch (error) {
-    next(error);
+    console.error('토큰 갱신 실패:', error.response?.data || error.message);
+    res.status(500).send('Spotify 토큰 갱신 실패');
   }
 });
 
+// Playback Token (Spotify Web Playback SDK)
 router.get('/playback-token', async (req, res) => {
   if (!req.session.accessToken) {
     return res.status(401).json({ error: '로그인되지 않았습니다.' });
   }
 
+  // 토큰 갱신 필요 여부 확인
   if (Date.now() >= req.session.expiresAt) {
     try {
-      const response = await axios.post('https://accounts.spotify.com/api/token', null, {
-        params: {
-          grant_type: 'refresh_token',
-          refresh_token: req.session.refreshToken,
-          client_id: process.env.SPOTIFY_CLIENT_ID,
-          client_secret: process.env.SPOTIFY_CLIENT_SECRET,
-        },
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+      const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: req.session.refreshToken,
+        client_id: process.env.SPOTIFY_CLIENT_ID,
+        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+      }), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
       const { access_token, expires_in } = response.data;
       req.session.accessToken = access_token;
       req.session.expiresAt = Date.now() + expires_in * 1000;
+
       console.log('Access Token 갱신 완료:', access_token);
     } catch (error) {
       console.error('토큰 갱신 실패:', error.response?.data || error.message);
-      return res.status(500).json({ error: '토큰 갱신 실패' });
+      return res.status(500).json({ error: 'Spotify 토큰 갱신 실패' });
     }
   }
 
   res.json({ token: req.session.accessToken });
 });
-
-
 
 // 로그아웃
 router.get('/logout', (req, res, next) => {

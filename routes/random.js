@@ -16,12 +16,14 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
   }
 
   try {
+    // 랜덤 키워드 선택
     const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
     console.log('랜덤 키워드:', randomKeyword);
 
-    // 요청 객체의 Spotify API 인스턴스 사용
+    // Spotify API 인스턴스 사용
     const spotifyApi = req.spotifyApi;
 
+    // Spotify에서 트랙 검색
     const data = await spotifyApi.searchTracks(randomKeyword, { limit: 50 });
     const tracks = data.body.tracks.items;
 
@@ -30,16 +32,19 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
       return res.status(404).json({ error: `검색 결과가 없습니다. 키워드: ${randomKeyword}` });
     }
 
+    // 검색된 트랙 중 랜덤 트랙 선택
     const randomIndex = Math.floor(Math.random() * tracks.length);
     const randomTrack = tracks[randomIndex];
 
+    // 결과 반환
     res.json({
       keyword: randomKeyword,
       track: {
         name: randomTrack.name,
         artists: randomTrack.artists.map((artist) => artist.name),
         url: randomTrack.external_urls.spotify,
-        thumbnail: randomTrack.album.images[0]?.url || null, // 앨범 커버 이미지 (가장 큰 이미지)
+        thumbnail: randomTrack.album.images[0]?.url || null, // 앨범 커버 이미지
+        uri: randomTrack.uri, // Spotify URI 추가
       },
     });
   } catch (error) {
@@ -47,6 +52,5 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
     res.status(500).json({ error: 'Spotify API 호출 실패' });
   }
 });
-
 
 module.exports = router;

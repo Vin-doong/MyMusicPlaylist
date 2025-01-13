@@ -1,38 +1,32 @@
 let accessToken = null;
-let expireToken = null;
+let expiresAt = null;
 
-// Access Token 받기
 async function getAccessToken() {
-  if (accessToken && expireToken && Date.now() < expireToken) {
-    return accessToken;
+  if (accessToken && expiresAt && Date.now() < expiresAt) {
+    return accessToken; // 기존 토큰 반환
   }
 
-  const authParam = {
-    method: "POST",
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${credentials}`,
     },
-    body:
-      "grant_type=client_credentials&client_id=" +
-      process.env.SPOTIFY_CLIENT_ID +
-      "&client_secret=" +
-      process.env.SPOTIFY_CLIENT_SECRET
-  };
+    body: 'grant_type=client_credentials',
+  });
 
-  // 새로운 토큰 요청
-  const res = await fetch("https://accounts.spotify.com/api/token", authParam);
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(`토큰 요청 실패: ${res.status} - ${errorData.error_description}`);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Spotify 토큰 요청 실패: ${errorData.error_description}`);
   }
 
-  const data = await res.json();
-  console.log("토큰 응답 데이터:", data);
-
-  // 새로운 토큰 저장
+  const data = await response.json();
   accessToken = data.access_token;
-  expireToken = Date.now() + data.expires_in * 1000;
+  expiresAt = Date.now() + data.expires_in * 1000;
 
   return accessToken;
 }

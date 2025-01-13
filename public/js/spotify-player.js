@@ -1,5 +1,6 @@
 let player;
 let currentDeviceId;
+let currentVolume = 0.5; // 초기 볼륨 값 (0.5)
 
 // Spotify Web Playback SDK 초기화
 async function initializeSpotifyPlayer() {
@@ -10,7 +11,7 @@ async function initializeSpotifyPlayer() {
   player = new Spotify.Player({
     name: 'Spotify Web Player',
     getOAuthToken: cb => cb(token),
-    volume: 0.8,
+    volume: currentVolume, // 초기 볼륨
   });
 
   player.addListener('ready', ({ device_id }) => {
@@ -20,8 +21,9 @@ async function initializeSpotifyPlayer() {
 
       // 디바이스 활성화
       activateDevice(device_id);
-    } else {
-      console.error('Device ID가 설정되지 않았습니다.');
+
+      // 슬라이더와 아이콘 초기화
+      syncVolumeWithUI(currentVolume);
     }
   });
 
@@ -34,6 +36,9 @@ async function initializeSpotifyPlayer() {
       const track = state.track_window.current_track;
       document.getElementById('track-name').textContent = track.name;
       document.getElementById('track-artist').textContent = track.artists.map(artist => artist.name).join(', ');
+
+      // 슬라이더와 아이콘 동기화
+      syncVolumeWithUI(currentVolume);
     }
   });
 
@@ -76,6 +81,56 @@ async function activateDevice(deviceId) {
   }
 }
 
+// 볼륨 동기화
+function syncVolumeWithUI(volume) {
+  const volumeSlider = document.getElementById('volume-slider');
+  const volumeLabel = document.getElementById('volume-label');
+  const volumePercentage = Math.round(volume * 100);
+
+  // 슬라이더 값 및 배경 업데이트
+  if (volumeSlider) {
+    volumeSlider.value = volumePercentage;
+    volumeSlider.style.background = `linear-gradient(to right, #0d6efd ${volumePercentage}%, #ddd ${volumePercentage}%)`;
+  }
+
+  // 볼륨 아이콘 업데이트
+  if (volumeLabel) {
+    if (volumePercentage === 0) {
+      volumeLabel.textContent = '🔇'; // 음소거
+    } else if (volumePercentage <= 50) {
+      volumeLabel.textContent = '🔉'; // 낮은 볼륨
+    } else {
+      volumeLabel.textContent = '🔊'; // 높은 볼륨
+    }
+  }
+}
+
+// 볼륨 조절
+function adjustVolume(volume) {
+  if (!player) {
+    alert('Spotify Player가 준비되지 않았습니다.');
+    return;
+  }
+
+  currentVolume = volume; // 현재 볼륨 상태 업데이트
+  player.setVolume(volume).catch(error => {
+    console.error('볼륨 조절 실패:', error);
+    alert('볼륨 조절에 실패했습니다.');
+  });
+
+  // 슬라이더와 아이콘 동기화
+  syncVolumeWithUI(volume);
+}
+
+// 슬라이더 이벤트 리스너 추가
+document.getElementById('volume-slider')?.addEventListener('input', event => {
+  const volume = event.target.value / 100; // 슬라이더 값을 0~1로 변환
+  adjustVolume(volume);
+});
+
+// 기존 곡 재생, 재생목록 등의 함수는 그대로 유지
+
+
 // 특정 곡 재생
 async function playTrack(spotifyUri) {
   if (!currentDeviceId) {
@@ -87,12 +142,12 @@ async function playTrack(spotifyUri) {
     .then(res => res.json())
     .then(data => data.token);
 
-  const isPlaylist = spotifyUri.startsWith('spotify:playlist:'); // URI가 플레이리스트인지 확인
+  const isPlaylist = spotifyUri.startsWith('spotify:playlist:');
 
   try {
     const requestBody = isPlaylist
-      ? { context_uri: spotifyUri } // 플레이리스트 재생
-      : { uris: [spotifyUri] };    // 개별 트랙 재생
+      ? { context_uri: spotifyUri }
+      : { uris: [spotifyUri] };
 
     const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${currentDeviceId}`, {
       method: 'PUT',
@@ -205,6 +260,7 @@ document.getElementById('pause-btn')?.addEventListener('click', pausePlayback);
 document.getElementById('prev-btn')?.addEventListener('click', previousTrack);
 document.getElementById('next-btn')?.addEventListener('click', nextTrack);
 
+//초기화
 window.onSpotifyWebPlaybackSDKReady = async () => {
   await initializeSpotifyPlayer();
 };

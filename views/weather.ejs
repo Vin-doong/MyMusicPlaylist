@@ -4,21 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>현재 날씨에 따른 추천 플레이리스트</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="icon" href="/favicon_io/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/css/weather.css" />
   </head>
   <body>
     <!-- 헤더 -->
     <%- include('partials/header'); %>
 
-    <div class="container text-center mt-5">
+    <div class="content container text-center mt-5">
       <h1>현재 위치 날씨에 따른 추천 플레이리스트</h1>
 
       <!-- 위치 요청 버튼 -->
       <div class="mt-4">
-        <button id="getLocation" class="btn btn-outline-info">추천 플레이리스트 보기</button>
+        <button id="getLocation" class="btn btn-outline-info">
+          추천 플레이리스트 보기
+        </button>
       </div>
 
       <!-- 로딩 메시지 -->
@@ -29,96 +30,172 @@
       <!-- 오류 메시지 -->
       <div id="errorMessage" class="mt-4 text-danger d-none"></div>
 
-      <!-- 결과 표시 -->
+      <!-- 플레이리스트 생성 양식 -->
+      <div id="playlistForm" class="mt-4 d-none">
+        <div class="mb-3">
+          <label for="playlistName" class="form-label">플레이리스트 이름</label>
+          <input
+            type="text"
+            id="playlistName"
+            class="form-control"
+            placeholder="플레이리스트 이름을 입력하세요"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="playlistDescription" class="form-label">플레이리스트 설명</label>
+          <input
+            type="text"
+            id="playlistDescription"
+            class="form-control"
+            placeholder="플레이리스트 설명을 입력하세요"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="publicOption" class="form-label">공개 설정</label>
+          <select id="publicOption" class="form-select">
+            <option value="true">공개</option>
+            <option value="false">개인</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 플레이리스트 담기 버튼 -->
+      <div id="playlistAction" class="mt-4 d-none">
+        <button id="create-playlist" class="btn btn-success">플레이리스트 담기</button>
+      </div>
+
+      <!-- 결과 표시 영역 -->
       <div id="results" class="mt-5"></div>
     </div>
 
+    <!-- 플레이어 푸터 -->
+    <div id="playerFooterContainer" class="footer-container d-none">
+      <%- include('partials/playerFooter'); %>
+    </div>
+
     <script>
+      // 결과 데이터를 저장하기 위한 변수
+      let lastWeatherCode = null; // weatherCode를 저장할 변수
+      let trackUris = []; // URI를 저장할 배열
+
+      // DOM 요소 선택
       const button = document.getElementById("getLocation");
       const loadingMessage = document.getElementById("loadingMessage");
       const errorMessage = document.getElementById("errorMessage");
       const resultsDiv = document.getElementById("results");
+      const playlistForm = document.getElementById("playlistForm");
+      const playlistAction = document.getElementById("playlistAction");
+      const createPlaylistButton = document.getElementById("create-playlist");
+      const playerFooterContainer = document.getElementById("playerFooterContainer");
 
-      // 위치 요청 버튼 클릭 이벤트
+      // 위치 요청 버튼 클릭 시 동작
       button.addEventListener("click", () => {
         loadingMessage.classList.remove("d-none");
         errorMessage.classList.add("d-none");
-        resultsDiv.innerHTML = '';
+        resultsDiv.innerHTML = "";
+        playlistAction.classList.add("d-none");
 
-        // 위치 정보 요청
-        navigator.geolocation.getCurrentPosition(success, fail);
+        navigator.geolocation.getCurrentPosition(fetchWeatherData, showError);
       });
 
-      // 위치 요청 성공 시 처리
-      const success = async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-
+      // 위치 정보 요청 성공 시 날씨 데이터를 가져옴
+      async function fetchWeatherData(position) {
         try {
-          // 서버로 위치 데이터 전달
-          const response = await fetch('/main/weather', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          const { latitude: lat, longitude: lon } = position.coords;
+          const response = await fetch("/weather", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ lat, lon }),
           });
 
-          if (!response.ok) {
-            throw new Error('서버 응답 실패');
-          }
-
+          if (!response.ok) throw new Error("서버 응답 실패");
           const data = await response.json();
+
           loadingMessage.classList.add("d-none");
 
-          // 결과 렌더링
-          if (data && data.length > 0) {
-            renderResults(data);
+          if (data.tracks && data.tracks.length > 0) {
+            trackUris = data.tracks.map((track) => track.uri);
+            renderResults(data.tracks);
+            playlistForm.classList.remove("d-none");
           } else {
             resultsDiv.innerHTML = '<p class="text-muted">추천 플레이리스트를 찾을 수 없습니다.</p>';
           }
         } catch (error) {
-          console.error("요청 실패:", error);
-          showError("데이터를 가져오지 못했습니다. 다시 시도해주세요.");
+          showError(error.message);
         }
-      };
+      }
 
-      // 위치 요청 실패 시 처리
-      const fail = () => {
-        loadingMessage.classList.add("d-none");
-        showError("위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요.");
+      // 플레이리스트 생성 버튼 클릭 시 동작
+      createPlaylistButton.addEventListener("click", async () => {
+        try {
+          const playlistName = document.getElementById("playlistName").value;
+          const playlistDescription = document.getElementById("playlistDescription").value;
+          const publicOption = document.getElementById("publicOption").value;
+
+          const params = new URLSearchParams({
+            playlistName,
+            playlistDescription,
+            publicOption,
+            tracks: JSON.stringify(trackUris),
+          });
+
+          const response = await fetch(`/weather/onthehouse?${params.toString()}`);
+
+          if (!response.ok) throw new Error("플레이리스트 생성 실패");
+          alert("플레이리스트가 성공적으로 생성되었습니다!");
+        } catch (error) {
+          alert("플레이리스트 생성 중 오류가 발생했습니다: " + error.message);
+        }
+      });
+
+      // 결과 렌더링
+      function renderResults(tracks) {
+        resultsDiv.innerHTML = "";
+        let rowDiv;
+
+        tracks.forEach((track, index) => {
+          if (index % 5 === 0) {
+            rowDiv = document.createElement("div");
+            rowDiv.className = "row g-4";
+            resultsDiv.appendChild(rowDiv);
+          }
+
+          const colDiv = document.createElement("div");
+          colDiv.className = "col-md-4 col-lg-2";
+          colDiv.innerHTML = `
+            <div class="card h-100">
+              <img src="${track.album.images[0]?.url}" class="card-img-top" alt="${track.name}">
+              <div class="card-body">
+                <h5 class="card-title">${track.name}</h5>
+                <p class="card-text">아티스트: ${track.artists.map((artist) => artist.name).join(", ")}</p>
+                <button class="btn btn-primary play-btn" data-uri="${track.uri}">재생</button>
+              </div>
+            </div>`;
+
+          rowDiv.appendChild(colDiv);
+        });
+
+        playlistAction.classList.remove("d-none");
+                //노래 재생버튼관련
+        document.querySelectorAll(".play-btn").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const uri = event.target.getAttribute("data-uri");
+            playTrack(uri);
+          });
+        });
+        // Player Footer 표시
+        const playerFooterContainer = document.getElementById(
+          "playerFooterContainer"
+        );
+        playerFooterContainer.classList.remove("d-none");
       };
 
       // 오류 메시지 표시
-      const showError = (message) => {
+      function showError(message) {
         errorMessage.textContent = message;
         errorMessage.classList.remove("d-none");
-      };
-
-      // 결과 렌더링
-      const renderResults = (tracks) => {
-        resultsDiv.innerHTML = '';
-        tracks.forEach((track) => {
-          const trackDiv = document.createElement("div");
-          trackDiv.innerHTML = `
-            <div class="card mt-3" style="max-width: 540px; margin: 0 auto;">
-              <div class="row g-0">
-                <div class="col-md-4">
-                  <img src="${track.album.images[0]?.url}" class="img-fluid rounded-start" alt="${track.name}">
-                </div>
-                <div class="col-md-8">
-                  <div class="card-body">
-                    <h5 class="card-title">${track.name}</h5>
-                    <p class="card-text">아티스트: ${track.artists.map((artist) => artist.name).join(', ')}</p>
-                    <a href="${track.external_urls.spotify}" target="_blank" class="btn btn-primary">Spotify에서 보기</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-          resultsDiv.appendChild(trackDiv);
-        });
-      };
+        loadingMessage.classList.add("d-none");
+      }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>

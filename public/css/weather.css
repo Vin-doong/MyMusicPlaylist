@@ -1,0 +1,56 @@
+/* 전체 페이지 스타일 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 로딩 및 오류 메시지 스타일 */
+#loadingMessage,
+#errorMessage {
+  font-size: 1.2rem;
+}
+
+/* 카드 스타일 */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
+  border-radius: 10px; /* 카드 모서리 둥글게 */
+}
+
+.card-img-top {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.card-body {
+  text-align: center;
+}
+
+/* 결과 섹션 정렬 */
+#results .row {
+  justify-content: center; /* row 가운데 정렬 */
+  gap: 20px; /* 카드 간격 */
+}
+
+/* 기본 바디 스타일 */
+body {
+  margin: 0;
+  padding-bottom: 25%; /* Footer의 높이만큼 추가 */
+  display: flex; /* 페이지를 세로로 정렬 */
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 푸터 스타일 */
+.footer-container {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: #fff;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 콘텐츠 영역 설정 */
+.content {
+  flex: 1; /* 나머지 공간 채우기 */
+}

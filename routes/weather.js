@@ -47,29 +47,84 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
     const weatherResponse = await axios.get(weatherUrl);
     const items = weatherResponse.data.response.body.items.item;
 
-    console.log('KMA 날씨 데이터:', items);
+    console.log('KMA 날씨 데이터:', items.length);
 
     // 날씨 데이터 처리
     const weatherCode = processKmaWeatherData(items);
     const weatherKeywords = generateWeatherKeywords(weatherCode);
-
+    console.log('날씨 코드:', weatherCode);
+    console.log('생성된 날씨 키워드:', weatherKeywords);
     if (!weatherKeywords.length) {
       return res.status(400).json({ error: '적합한 날씨 키워드를 생성할 수 없습니다.' });
     }
 
-    console.log('생성된 날씨 키워드:', weatherKeywords);
 
     // Spotify API 호출
     const spotifyApiInstance = req.spotifyApi;
     const query = weatherKeywords.join(' ');
     const spotifyResponse = await spotifyApiInstance.searchTracks(query, { limit: 10 });
-
-    res.json(spotifyResponse.body.tracks.items);
+    console.log('Spotify 검색 결과:', spotifyResponse.body.tracks.items.length);
+    // 응답에 weatherCode 포함 // 0109raemi
+    res.json({
+      weatherCode, // 추가
+      tracks: spotifyResponse.body.tracks.items,
+    });
   } catch (error) {
     console.error('오류 발생:', error.message || error);
     res.status(500).json({ error: 'KMA API 호출 또는 Spotify API 호출 실패' });
   }
 });
+
+// 0109raemi 라우터추가
+// 사용자 ID 가져오기 & 플레이리스트 생성 & 곡 추가
+router.get('/onthehouse',ensureSpotifyToken, async (req, res) => {
+  try {
+  // Spotify API 호출
+  console.log('Spotify API 객체 확인:', req.spotifyApi);
+  const spotifyApiInstance = req.spotifyApi;
+  
+  //Spotify API id가져오기
+  const userProfile = await spotifyApiInstance.getMe();
+  const userId = userProfile.body.id
+  console.log('사용자 id:', userId);
+
+  // 요청쿼리에서 playlistName과 playlistDescription tracks를 가져오기
+  const { playlistName, playlistDescription,publicOption, tracks } = req.query;
+  console.log('플리이름:', playlistName,'/플리 설명:', playlistDescription
+    ,'/공공옵션:', publicOption
+    ,'/tracks:', tracks);
+  /* {=================나중에 플리이름 중복검사 추가하기=================} */
+
+  if (!playlistName || !playlistDescription || !tracks) {
+      return res.status(400).json({ error: '필수 매개변수가 없습니다.' });
+  }
+  // trackUris를 배열로 복원
+  const Tracks = JSON.parse(tracks);
+  if (!Array.isArray(Tracks)) {
+    return res.status(400).json({ error: 'trackUris가 유효하지 않습니다.' });
+  }
+
+  // Spotify API 플레이리스트 생성
+  const playlist = await spotifyApiInstance.createPlaylist(userId, {
+    name: playlistName,
+    description: playlistDescription,
+    public: publicOption,
+  });
+  const playlistId = playlist.body.id;
+  console.log('생성된 플레이리스트 ID:', playlistId);
+
+  // Spotify API 플레이리스트에 곡 추가
+  const addTracks = await spotifyApiInstance.addTracksToPlaylist(playlistId, Tracks);
+
+    res.json({ message: '플레이리스트 생성 및 곡 추가 완료', addTracks});
+  } catch (error) {
+    console.error('플레이리스트생성 실패:', error.message);
+    res.status(500).json({ error: '사용자 ID 가져오기 및 플레이리스트 생성 실패' });
+  }
+});
+
+
+
 
 // 현재 날짜 및 시간 가져오기 (KMA 기준)
 function getCurrentKmaDateTime() {
@@ -99,27 +154,28 @@ function getCurrentKmaDateTime() {
 function processKmaWeatherData(items) {
   const skyItem = items.find(item => item.category === 'SKY');
   const rainItem = items.find(item => item.category === 'PTY');
-
   const skyValue = skyItem?.fcstValue || 'N/A';
   const rainValue = rainItem?.fcstValue || 'N/A';
-
-  if (skyValue === '1' && rainValue === '0') return 'clear';
-  if ((skyValue === '3' || skyValue === '4') && rainValue === '0') return 'cloudy';
-  if (rainValue === '1' || rainValue === '2') return 'rainy';
-  if (rainValue === '3') return 'snowy';
-  return 'unknown';
+  //console.log(skyValue,rainValue);
+  // 0109raemi // 문자반환이 아니라 weathercode반환으로변경(이후 재사용성)
+  // 맑음(0), 흐림(1), 비(2), 눈(3)
+  if (skyValue == 1 && rainValue == 0) return 0;
+  if ((skyValue == 3 || skyValue == 4) && rainValue == 0) return 1;
+  if (rainValue == 1 || rainValue ==2 || rainValue == 5) return 2;
+  if (rainValue == 6 || rainValue == 7) return 3;
+  return -1;
 }
 
-// 날씨 설명에 따른 키워드 생성 함수
+// 날씨 설명에 따른 키워드 생성 함수 //0109raemi weathercode 조건절 바꿈
 function generateWeatherKeywords(weatherCode) {
   const keywords = [];
-  if (weatherCode === 'clear') {
+  if (weatherCode === 0) {
     keywords.push('sunny', 'happy', 'energetic');
-  } else if (weatherCode === 'cloudy') {
+  } else if (weatherCode === 1) {
     keywords.push('cloudy', 'calm', 'soft');
-  } else if (weatherCode === 'rainy') {
+  } else if (weatherCode === 2) {
     keywords.push('rainy', 'chill', 'relaxing');
-  } else if (weatherCode === 'snowy') {
+  } else if (weatherCode === 3) {
     keywords.push('snowy', 'winter', 'cozy');
   }
   return keywords;

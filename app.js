@@ -34,12 +34,13 @@ app.use(
 // 라우트 설정
 app.use('/auth', require('./routes/auth'));
 app.use('/main', require('./routes/main'));
-app.use('/main/playlist', require('./routes/playlist'));
-app.use('/main/profile', require('./routes/profile'));
-app.use('/main/mood', require('./routes/mood'));
-app.use('/main/weather', require('./routes/weather'));
-app.use('/main/top100', require('./routes/top100'));
-app.use('/main/random', require('./routes/random'));
+app.use('/mood', require('./routes/mood'));
+app.use('/weather', require('./routes/weather'));
+app.use('/top100', require('./routes/top100'));
+app.use('/random', require('./routes/random'));
+app.use('/myplaylist', require('./routes/myplaylist'));
+app.use('/profile', require('./routes/profile'));
+
 
 // 기본 라우트 (홈 페이지)
 app.get('/', (req, res) => {
