@@ -54,3 +54,14 @@ body {
 .content {
   flex: 1; /* 나머지 공간 채우기 */
 }
+
+/* 0113 raemi */
+/* 날씨 이미지 크기 조정 */
+#weatherImage img{
+  width: 300px;
+  height: 300px;
+}
+#addressDisplay{
+  font-size: large;
+  font-weight: bold; 
+}

@@ -15,6 +15,11 @@
     <div class="content container text-center mt-5">
       <h1>현재 위치 날씨에 따른 추천 플레이리스트</h1>
 
+      <!-- 0113 raemi -->
+      <!-- 날씨 결과 이미지 및 주소 표시 -->
+      <div id="weatherImage" class="mt-4"></div>
+      <div id="addressDisplay" class="mt-2 text-muted"></div>
+
       <!-- 위치 요청 버튼 -->
       <div class="mt-4">
         <button id="getLocation" class="btn btn-outline-info">
@@ -75,7 +80,12 @@
 
     <script>
       // 결과 데이터를 저장하기 위한 변수
-      let lastWeatherCode = null; // weatherCode를 저장할 변수
+
+      // 0113 raemi
+      let weather = '';
+      let Imagepath = ''; // 이미지경로 저장
+      let address = ''; //주소 저장
+
       let trackUris = []; // URI를 저장할 배열
 
       // DOM 요소 선택
@@ -110,6 +120,16 @@
 
           if (!response.ok) throw new Error("서버 응답 실패");
           const data = await response.json();
+
+          // 0113 raemi
+          // 이미지와 주소 데이터를 업데이트
+          weather = CodetoWeather(data.weatherCode)
+          Imagepath = data.Imagepath
+          address = data.address
+          // 날씨 이미지 및 주소 표시
+          document.getElementById("weatherImage").innerHTML = `<img src="${Imagepath}" alt="Weather Image" class="img-fluid">`;
+          document.getElementById("addressDisplay").textContent = `현재 ${address}의 날씨는 ${weather}입니다.`;
+
 
           loadingMessage.classList.add("d-none");
 
@@ -189,6 +209,22 @@
         );
         playerFooterContainer.classList.remove("d-none");
       };
+
+      // 0113 raemi
+      // 날씨 코드 날씨로 변환
+      function CodetoWeather(weatherCode) {
+        let weather = ''
+        if( weatherCode === 0){
+          weather = '맑음'
+        }else if (weatherCode === 1){
+          weather = '흐림'
+        }else if (weatherCode === 2){
+          weather = '비'
+        }else if (weatherCode === 3){
+          weather = '눈'
+        }
+        return weather
+      }
 
       // 오류 메시지 표시
       function showError(message) {

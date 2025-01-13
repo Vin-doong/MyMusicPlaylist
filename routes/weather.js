@@ -58,6 +58,18 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
       return res.status(400).json({ error: '적합한 날씨 키워드를 생성할 수 없습니다.' });
     }
 
+    // 0113 raemi 기능추가(화면관련)
+    const Imagepath = getWeatherImagepath(weatherCode)
+    const addressUrl = `https://dapi.kakao.com/v2/local/geo/coord2address.JSON?x=${lon}&y=${lat}`;
+    const addressResponse = await axios.get(addressUrl, {
+      headers: {
+        Authorization: `KakaoAK ${process.env.KAKAO_API_KEY}`,
+      },
+    });
+    const address_name =
+      addressResponse.data.documents[0].address.region_2depth_name
+      +" "+ addressResponse.data.documents[0].address.region_3depth_name
+    console.log('주소:', address_name);
 
     // Spotify API 호출
     const spotifyApiInstance = req.spotifyApi;
@@ -66,12 +78,14 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
     console.log('Spotify 검색 결과:', spotifyResponse.body.tracks.items.length);
     // 응답에 weatherCode 포함 // 0109raemi
     res.json({
-      weatherCode, // 추가
+      weatherCode : weatherCode, // 0113 raemi
+      Imagepath: Imagepath, // 0113 raemi
+      address: address_name, //0113 raemi
       tracks: spotifyResponse.body.tracks.items,
     });
   } catch (error) {
     console.error('오류 발생:', error.message || error);
-    res.status(500).json({ error: 'KMA API 호출 또는 Spotify API 호출 실패' });
+    res.status(500).json({ error: 'KMA API 호출 또는 Spotify API 또는 Kakao API 호출 실패' });
   }
 });
 
@@ -169,16 +183,32 @@ function processKmaWeatherData(items) {
 // 날씨 설명에 따른 키워드 생성 함수 //0109raemi weathercode 조건절 바꿈
 function generateWeatherKeywords(weatherCode) {
   const keywords = [];
+  // 맑음(0), 흐림(1), 비(2), 눈(3)
   if (weatherCode === 0) {
-    keywords.push('sunny', 'happy', 'energetic');
+    keywords.push('sunny', 'happy', 'energetic','Bright tunes');
   } else if (weatherCode === 1) {
-    keywords.push('cloudy', 'calm', 'soft');
+    keywords.push('cloudy', 'calm', 'soft','Chill tunes','Relaxing songs','Soft indie');
   } else if (weatherCode === 2) {
-    keywords.push('rainy', 'chill', 'relaxing');
+    keywords.push('rainy', 'chill', 'relaxing', 'Lo-fi rain' );
   } else if (weatherCode === 3) {
-    keywords.push('snowy', 'winter', 'cozy');
+    keywords.push('snowy', 'winter', 'cozy','Winter beats');
   }
   return keywords;
+}
+
+// 0113 raemi
+function getWeatherImagepath(weatherCode) {
+  let Imagepath = ''
+  if (weatherCode === 0) {
+    Imagepath = '/image/sunny.png'
+  } else if (weatherCode === 1) {
+    Imagepath = '/image/cloudy.png'
+  } else if (weatherCode === 2) {
+    Imagepath = '/image/rainy.png'
+  } else if (weatherCode === 3) {
+    Imagepath = '/image/snowy.png'
+  }
+  return Imagepath;
 }
 
 module.exports = router;
