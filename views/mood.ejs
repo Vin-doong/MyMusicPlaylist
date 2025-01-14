@@ -177,7 +177,7 @@
           tracks: JSON.stringify(trackUris),
         });
 
-        const response = await fetch(`/weather/onthehouse?${params.toString()}`);
+        const response = await fetch(`/mood/onthehouse?${params.toString()}`);
 
         if (!response.ok) throw new Error("플레이리스트 생성 실패");
         alert("플레이리스트가 성공적으로 생성되었습니다!");
