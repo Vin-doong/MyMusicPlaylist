@@ -1,0 +1,69 @@
+/* Smooth transition for offcanvas */
+.offcanvas {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Header styles */
+  .offcanvas-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-bottom: 2px solid #ddd;
+  }
+  
+  .offcanvas-header h5 {
+    font-size: 1.25rem;
+    color: #333;
+  }
+  
+  .offcanvas-header .btn-close {
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 1.5rem;
+    padding: 0;
+    cursor: pointer;
+  }
+  
+  .offcanvas-header .btn-close:hover {
+    color: #007bff;
+    transform: scale(1.1);
+  }
+  
+  .offcanvas-body {
+    padding: 30px;
+    background-color: #ffffff;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  #playlists .list-group-item {
+    border-radius: 10px;
+    margin-bottom: 15px;
+    padding: 12px 18px;
+    background-color: #f7f7f7;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  #playlists .list-group-item:hover {
+    background-color: #f1f1f1;
+    transform: scale(1.02);
+  }
+  
+  #playlists .btn {
+    background-color: #007bff;
+    color: white;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    padding: 5px 12px;
+    transition: background-color 0.3s ease;
+  }
+  
+  #playlists .btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+  }
+  
+  .offcanvas.show {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
