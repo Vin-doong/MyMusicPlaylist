@@ -4,6 +4,7 @@ const axios = require('axios');
 const { ensureSpotifyToken } = require('../middleware/spotifyToken');
 
 const KMA_API_KEY = process.env.KMA_API_KEY; // KMA API 키
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 
 // 날씨 검색 페이지 렌더링
 router.get('/', (req, res) => {
@@ -21,45 +22,22 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
 
     console.log('요청받은 위도:', lat, '경도:', lon);
 
-    // KMA API 좌표 변환
-    const kmaUrl = `https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-dfs_xy_lonlat?lat=${lat}&lon=${lon}&help=0&authKey=${KMA_API_KEY}`;
-    const kmaResponse = await axios.get(kmaUrl);
-    const kmaLines = kmaResponse.data.split('\n');
-    const kmaDataLine = kmaLines[2]?.trim();
-    if (!kmaDataLine) {
-      return res.status(500).json({ error: 'KMA API에서 유효한 데이터를 가져오지 못했습니다.' });
-    }
-    const kmaData = kmaDataLine.split(',');
-    const nx = kmaData[2];
-    const ny = kmaData[3];
-
-    console.log('KMA 변환 좌표:', { nx, ny });
-
-    // 현재 날짜 및 시간 가져오기
-    const { baseDate, baseTime } = getCurrentKmaDateTime();
-
-    // KMA 날씨 데이터 가져오기
-    const weatherUrl = `https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtFcst?pageNo=1&numOfRows=20&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}&authKey=${KMA_API_KEY}`;
-
-
-    console.log('KMA 날씨 API URL:', weatherUrl);
-
-    const weatherResponse = await axios.get(weatherUrl);
-    const items = weatherResponse.data.response.body.items.item;
-
-    console.log('KMA 날씨 데이터:', items.length);
-
-    // 날씨 데이터 처리
-    const weatherCode = processKmaWeatherData(items);
-    const weatherKeywords = generateWeatherKeywords(weatherCode);
-    console.log('날씨 코드:', weatherCode);
-    console.log('생성된 날씨 키워드:', weatherKeywords);
-    if (!weatherKeywords.length) {
+    // OpenWeather API 호출
+    const openWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}`;
+    const openWeatherResponse = await axios.get(openWeatherUrl);
+    const openWeatherId = openWeatherResponse.data.weather[0].id;
+    console.log('OpenWeather 날씨Id:', openWeatherId);
+    // OpemWeather 날씨 데이터 처리
+    const OpenweatherCode = processOpenWeatherData(openWeatherId);
+    const OpenweatherKeywords = generateWeatherKeywords(OpenweatherCode);
+    console.log('날씨 코드:', OpenweatherCode);
+    console.log('날씨 키워드:', OpenweatherKeywords);
+    if (!OpenweatherKeywords.length) {
       return res.status(400).json({ error: '적합한 날씨 키워드를 생성할 수 없습니다.' });
     }
 
     // 0113 raemi 기능추가(화면관련)
-    const Imagepath = getWeatherImagepath(weatherCode)
+    const Imagepath = getWeatherImagepath(OpenweatherCode)
     const addressUrl = `https://dapi.kakao.com/v2/local/geo/coord2address.JSON?x=${lon}&y=${lat}`;
     const addressResponse = await axios.get(addressUrl, {
       headers: {
@@ -73,12 +51,12 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
 
     // Spotify API 호출
     const spotifyApiInstance = req.spotifyApi;
-    const query = weatherKeywords.join(' ');
+    const query = OpenweatherKeywords.join(' ');
     const spotifyResponse = await spotifyApiInstance.searchTracks(query, { limit: 10 });
     console.log('Spotify 검색 결과:', spotifyResponse.body.tracks.items.length);
     // 응답에 weatherCode 포함 // 0109raemi
     res.json({
-      weatherCode : weatherCode, // 0113 raemi
+      weatherCode : OpenweatherCode, // 0113 raemi
       Imagepath: Imagepath, // 0113 raemi
       address: address_name, //0113 raemi
       tracks: spotifyResponse.body.tracks.items,
@@ -137,47 +115,15 @@ router.get('/onthehouse',ensureSpotifyToken, async (req, res) => {
   }
 });
 
-
-
-
-// 현재 날짜 및 시간 가져오기 (KMA 기준)
-function getCurrentKmaDateTime() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  let hours = now.getHours();
-  const minutes = '30';
-
-  if (now.getMinutes() < 30) {
-    hours -= 1;
-  }
-  if (hours < 0) {
-    hours = '00';
-  } else {
-    hours = String(hours).padStart(2, '0');
-  }
-  
-  return {
-    baseDate: `${year}${month}${day}`,
-    baseTime: `${hours}${minutes}`,
-  };
-}
-
-// KMA 날씨 데이터를 처리하여 날씨 코드 생성
-function processKmaWeatherData(items) {
-  const skyItem = items.find(item => item.category === 'SKY');
-  const rainItem = items.find(item => item.category === 'PTY');
-  const skyValue = skyItem?.fcstValue || 'N/A';
-  const rainValue = rainItem?.fcstValue || 'N/A';
-  //console.log(skyValue,rainValue);
-  // 0109raemi // 문자반환이 아니라 weathercode반환으로변경(이후 재사용성)
+// OpemWeather 날씨 데이터를 처리하여 날씨 코드 생성
+function processOpenWeatherData(id) {
+  const OpenWeatherId = id;
   // 맑음(0), 흐림(1), 비(2), 눈(3)
-  if (skyValue == 1 && rainValue == 0) return 0;
-  if ((skyValue == 3 || skyValue == 4) && rainValue == 0) return 1;
-  if (rainValue == 1 || rainValue ==2 || rainValue == 5) return 2;
-  if (rainValue == 6 || rainValue == 7) return 3;
-  return -1;
+  if (OpenWeatherId == 800) return 0;
+  else if (700<=OpenWeatherId<800 ||800<OpenWeatherId) return 1;
+  else if (200<=OpenWeatherId<300 || 300<=OpenWeatherId<400, 500<=OpenWeatherId<600) return 2;
+  else if (600<=OpenWeatherId<700) return 3;
+  else return -1;
 }
 
 // 날씨 설명에 따른 키워드 생성 함수 //0109raemi weathercode 조건절 바꿈
