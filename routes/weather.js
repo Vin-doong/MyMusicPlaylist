@@ -3,7 +3,6 @@ const router = express.Router();
 const axios = require('axios');
 const { ensureSpotifyToken } = require('../middleware/spotifyToken');
 
-const KMA_API_KEY = process.env.KMA_API_KEY; // KMA API 키
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 
 // 날씨 검색 페이지 렌더링
@@ -25,12 +24,12 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
     // OpenWeather API 호출
     const openWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}`;
     const openWeatherResponse = await axios.get(openWeatherUrl);
-    const openWeatherId = openWeatherResponse.data.weather[0].id;
-    console.log('OpenWeather 날씨Id:', openWeatherId);
+    const Id = openWeatherResponse.data.weather[0].id;
+    console.log('OpenWeather 날씨Id:', Id);
     // OpemWeather 날씨 데이터 처리
-    const OpenweatherCode = processOpenWeatherData(openWeatherId);
-    const OpenweatherKeywords = generateWeatherKeywords(OpenweatherCode);
+    const OpenweatherCode = processOpenWeatherData(Id);
     console.log('날씨 코드:', OpenweatherCode);
+    const OpenweatherKeywords = generateWeatherKeywords(OpenweatherCode);
     console.log('날씨 키워드:', OpenweatherKeywords);
     if (!OpenweatherKeywords.length) {
       return res.status(400).json({ error: '적합한 날씨 키워드를 생성할 수 없습니다.' });
@@ -38,6 +37,7 @@ router.post('/', ensureSpotifyToken, async (req, res) => {
 
     // 0113 raemi 기능추가(화면관련)
     const Imagepath = getWeatherImagepath(OpenweatherCode)
+    console.log("이미지 경로: "+ Imagepath);
     const addressUrl = `https://dapi.kakao.com/v2/local/geo/coord2address.JSON?x=${lon}&y=${lat}`;
     const addressResponse = await axios.get(addressUrl, {
       headers: {
@@ -116,13 +116,18 @@ router.get('/onthehouse',ensureSpotifyToken, async (req, res) => {
 });
 
 // OpemWeather 날씨 데이터를 처리하여 날씨 코드 생성
-function processOpenWeatherData(id) {
-  const OpenWeatherId = id;
+function processOpenWeatherData(Id) {
   // 맑음(0), 흐림(1), 비(2), 눈(3)
-  if (OpenWeatherId == 800) return 0;
-  else if (700<=OpenWeatherId<800 ||800<OpenWeatherId) return 1;
-  else if (200<=OpenWeatherId<300 || 300<=OpenWeatherId<400, 500<=OpenWeatherId<600) return 2;
-  else if (600<=OpenWeatherId<700) return 3;
+  // 안개(4), 연기,먼지(5), 모래(6), 번개,토네이도(7)
+  // console.log("프로세스로 들어온 날씨 코드: "+Id);
+  if (Id == 800) return 0;
+  else if (800<Id) return 1;
+  else if ((Id>=300&&Id<400) || (Id>=500&&Id<600) || Id==771) return 2;
+  else if (Id >= 600 && Id < 700) return 3;
+  else if(Id==701 || Id==721 || Id==741) return 4;
+  else if(Id==711 || Id==761 || Id==762) return 5;
+  else if(Id==731 || Id==751) return 6;
+  else if( (Id>=200&& Id<300) || Id==781) return 7;
   else return -1;
 }
 
@@ -138,6 +143,14 @@ function generateWeatherKeywords(weatherCode) {
     keywords.push('rainy', 'chill', 'relaxing', 'Lo-fi rain' );
   } else if (weatherCode === 3) {
     keywords.push('snowy', 'winter', 'cozy','Winter beats');
+  } else if (weatherCode === 4) {
+    keywords.push('haze', 'foggy', 'fog','Foggy');
+  } else if (weatherCode === 5) {
+    keywords.push('dust', 'dusty', 'dusty','Dusty');
+  } else if (weatherCode === 6) { //모래쿼리
+    keywords.push('sandy', 'hot', 'desert','Desert');
+  } else if (weatherCode === 7) { 
+    keywords.push('storm', 'stormy', 'storm','Stormy');
   }
   return keywords;
 }
@@ -145,14 +158,24 @@ function generateWeatherKeywords(weatherCode) {
 // 0113 raemi
 function getWeatherImagepath(weatherCode) {
   let Imagepath = ''
+  // 1~3 사이의 랜덤 숫자를 생성
+  const randomNum = Math.floor(Math.random() * 3) + 1;
   if (weatherCode === 0) {
-    Imagepath = '/image/sunny.png'
+    Imagepath = `/image/weather/sunny${randomNum}.png`;
   } else if (weatherCode === 1) {
-    Imagepath = '/image/cloudy.png'
+    Imagepath = `/image/weather/cloudy${randomNum}.png`
   } else if (weatherCode === 2) {
-    Imagepath = '/image/rainy.png'
+    Imagepath = `/image/weather/rainy${randomNum}.png`
   } else if (weatherCode === 3) {
-    Imagepath = '/image/snowy.png'
+    Imagepath = `/image/weather/snowy${randomNum}.png`
+  } else if (weatherCode === 4) {
+    Imagepath = `/image/weather/haze${randomNum}.png`
+  } else if (weatherCode === 5) {
+    Imagepath = `/image/weather/dust${randomNum}.png`
+  } else if (weatherCode === 6) {
+    Imagepath = `/image/weather/sandy${randomNum}.png`
+  } else if (weatherCode === 7) {
+    Imagepath = `/image/weather/storm${randomNum}.png`
   }
   return Imagepath;
 }

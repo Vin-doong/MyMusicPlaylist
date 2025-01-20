@@ -69,7 +69,7 @@
 
   <!-- 플레이어 푸터 추가 -->
   <div id="playerFooterContainer" class="footer-container d-none">
-    <%- include('partials/playerFooter'); %>
+    <%- include('partials/playerFootermini'); %>
   </div>
 
   <script>
@@ -142,6 +142,9 @@
           });
           resultsDiv.appendChild(rowDiv);
         }
+        //0117
+        // Play 버튼 이벤트 초기화
+        initializePlayButtonListeners();
         //재생관련
         document.querySelectorAll('.play-btn').forEach(button => {
         button.addEventListener('click', event => {

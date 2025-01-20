@@ -75,7 +75,7 @@
 
     <!-- 플레이어 푸터 -->
     <div id="playerFooterContainer" class="footer-container d-none">
-      <%- include('partials/playerFooter'); %>
+      <%- include('partials/playerFootermini'); %>
     </div>
 
     <script>
@@ -207,6 +207,9 @@
         const playerFooterContainer = document.getElementById(
           "playerFooterContainer"
         );
+        //0117
+        // Play 버튼 이벤트 초기화
+        initializePlayButtonListeners();
         playerFooterContainer.classList.remove("d-none");
       };
 
@@ -222,6 +225,16 @@
           weather = '비'
         }else if (weatherCode === 3){
           weather = '눈'
+        }
+        // 0117 raemi
+        else if (weatherCode === 4){
+          weather = '안개'
+        }else if (weatherCode === 5){
+          weather = '연기, 먼지, 화산재'
+        }else if (weatherCode === 6){
+          weather = '모래'
+        }else if (weatherCode === 7){
+          weather = '천둥번개, 토네이도'
         }
         return weather
       }

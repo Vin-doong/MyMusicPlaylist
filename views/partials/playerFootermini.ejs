@@ -1,22 +1,12 @@
 <footer>
   <!-- CSS 파일 포함 -->
-  <link rel="stylesheet" href="/css/playerFooter.css"> <!-- playerFooter.css 포함 -->
+  <link rel="stylesheet" href="/css/playerFootermini.css"> <!-- playerFooter.css 포함 -->
 
   
     <!-- 현재 재생 곡 정보 -->
     <div class="container d-flex flex-column align-items-center">
 
-  <div class="spotify-player py-2 d-flex align-items-center justify-content-between">
-    <!-- 카세트 테이프 -->
-    <div class="cassette">
-      <div class="tape-reel" id="reel-left">
-        <img src="/image/icon/cassette-reel3.png" alt="Reel" class="reel-image" />
-      </div>
-      <div class="tape-reel" id="reel-right">
-        <img src="/image/icon/cassette-reel3.png" alt="Reel" class="reel-image" />
-      </div>
-      <div class="cassette-body"></div>
-    </div>
+    <div class="spotify-player py-2 d-flex align-items-center justify-content-between">
 
 
 
@@ -27,22 +17,27 @@
         <div class="player-wrapper">
           <!-- Header -->
           <!-- 0117 -->
-          <div id="now-playing-info" class="text-center mb-3">
+          <div id="now-playing-info" class="d-flex align-items-center" >
             <strong id="track-name" class="d-block">재생 중인 곡 없음</strong>
             <small id="track-artist">아티스트 정보 없음</small>
+            <!-- Controls -->
+            <div class="control-btn">
+              <button id="prev-btn" class="control-btn">
+                <img src="/image/icon/previ.png" alt="Previous" />
+              </button>
+              <button id="play-btn" class="control-btn">
+                <img src="/image/icon/play.png" alt="Play" />
+              </button>
+              <button id="pause-btn" class="control-btn" style="display: none;">
+                <img src="/image/icon/pause.png" alt="Pause" />
+              </button>
+              <button id="next-btn" class="control-btn">
+                <img src="/image/icon/next.png" alt="Next" />
+              </button>
+            </div>
           </div>
         
-          <!-- VU Meters -->
-          <div class="vu-meter-container">
-            <div class="vu-meter">
-              <span>LEFT</span>
-              <div class="meter-bar"></div>
-            </div>
-            <div class="vu-meter">
-              <span>RIGHT</span>
-              <div class="meter-bar"></div>
-            </div>
-          </div>
+
         
           <!-- Progress Bar -->
           <div class="progress-section">
@@ -53,21 +48,7 @@
             <span id="total-time">3:30</span>
           </div>
         
-          <!-- Controls -->
-          <div class="controls">
-            <button id="prev-btn" class="control-btn">
-              <img src="/image/icon/previ.png" alt="Previous" />
-            </button>
-            <button id="play-btn" class="control-btn">
-              <img src="/image/icon/play.png" alt="Play" />
-            </button>
-            <button id="pause-btn" class="control-btn" style="display: none;">
-              <img src="/image/icon/pause.png" alt="Pause" />
-            </button>
-            <button id="next-btn" class="control-btn">
-              <img src="/image/icon/next.png" alt="Next" />
-            </button>
-          </div>
+
         
           <!-- Volume and Power -->
           <div class="bottom-section">
@@ -81,11 +62,6 @@
             </div>
           </div>
         </div>
-        
-        <!--                                                                                  볼륨 조절                                                                                -->
-
-
-        
       </div>
     </div>
   </div>

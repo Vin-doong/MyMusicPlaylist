@@ -1,0 +1,81 @@
+.navbar-brand{
+   font-family: "DOSSaemmul"; 
+   text-align: left;
+   margin-left: 10px;
+}
+
+.title{
+   transform: translate(5%, 0%);
+   display: flex;
+   align-items: center; /* 세로 가운데 정렬 */
+   justify-content: center;/* 가로 가운데 정렬 */
+   width: 80%; /* 부모 컨테이너 전체를 차지 */
+   height: 80%; /* 필요한 경우 높이를 지정 */
+   margin: 0;
+   padding: 0;
+}
+
+.title-font{/* 글꼴 설정 */
+   justify-content: center;
+   color: #efdf96;
+   font-size: 60px;
+   font-weight: bold;
+   font-family: "DOSSaemmul";
+   -webkit-text-stroke: 0.5px #4e4932; /* 테두리설정 */
+   text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5); /* 그림자 효과 */
+   margin-left: 10px;
+}
+
+.title-image{
+   max-width: 100%; /* 이미지 크기 제한 (필요에 따라 조정 가능) */
+   height: auto; /* 이미지 비율 유지 */
+}
+
+@font-face { /*  둥근모꼴 */
+   font-family: 'DungGeunMo';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 삼립크리미화이트체 */
+   font-family: 'TTSamlipCreamyWhiteR';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-4@1.0/TTSamlipCreamyWhiteR.woff2') format('woff2');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 도스샘물 */
+   font-family: 'DOSSaemmul';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_eight@1.0/DOSSaemmul.woff') format('woff');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 읏맨체 */
+   font-family: 'OKCHAN';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/OKCHAN.woff2') format('woff2');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 제주돌담체 */
+   font-family: 'EF_jejudoldam';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2') format('woff2');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 양진체 */
+   font-family: '양진체';
+   src: url('https://fastly.jsdelivr.net/gh/supernovice-lab/font@0.9/yangjin.woff') format('woff');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 을지로체 */
+   font-family: 'BMEULJIRO';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/BMEULJIRO.woff') format('woff');
+   font-weight: normal;
+   font-style: normal;
+}
+@font-face {/* 을지로10년후체 */
+   font-family: 'BMEuljiro10yearslater';
+   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10-21@1.0/BMEuljiro10yearslater.woff') format('woff');
+   font-weight: normal;
+   font-style: normal;
+}

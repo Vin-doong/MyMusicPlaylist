@@ -2,6 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { ensureSpotifyToken } = require('../middleware/spotifyToken');
 
+// 미리 지정된 키워드 배열
+const predefinedKeywords = [
+  'Calm','Relaxing','Energetic','Upbeat','Chill','Nostalgic','Romantic','Melancholic','Motivational','Inspirational',
+'Morning','Night','Sunrise','Sunset','Late Night','Afternoon','Weekend','Party','Midnight','Coffee Break',
+'Pop','Rock','Hip-Hop','Jazz','Classical','EDM','Reggae','Folk','Blues','Indie',
+'Workout','Study','Driving','Gaming','Meditation','Cooking','Dancing','Road Trip','Sleep','Rainy Day',
+'Happy','Sad','Love','Heartbreak','Excited','Peaceful','Angry','Lonely','Hopeful','Confident',
+'Summer','Winter','Spring','Autumn','Holiday','Christmas','Halloween','New Year','Vacation','Cozy',
+'Wedding','Birthday','Anniversary','Graduation','First Date','Breakup','Reunion','Proposal','Celebration','Farewell',
+'Gym','Beach','Office','Park','Home','Commute','Yoga','Hiking','Camping','Shopping',
+'English','Korean','Spanish','French','Japanese','Italian','German','Portuguese','Chinese','Arabic',
+'Acoustic','Instrumental','Lo-fi','Retro','Ambient','Mashup','Live','Covers','Duets','Originals'
+];
+
 // 랜덤 검색 페이지 렌더링
 router.get('/', (req, res) => {
   res.render('random');
@@ -9,15 +23,9 @@ router.get('/', (req, res) => {
 
 // 랜덤 검색 처리
 router.post('/', ensureSpotifyToken, async (req, res) => {
-  const { keywords } = req.body;
-
-  if (!keywords || keywords.length === 0) {
-    return res.status(400).json({ error: '키워드를 입력해주세요.' });
-  }
-
   try {
     // 랜덤 키워드 선택
-    const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+    const randomKeyword = predefinedKeywords[Math.floor(Math.random() * predefinedKeywords.length)];
     console.log('랜덤 키워드:', randomKeyword);
 
     // Spotify API 인스턴스 사용
